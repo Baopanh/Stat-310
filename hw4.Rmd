@@ -1,0 +1,196 @@
+---
+title: "STAT 310 Assignment 4"
+author: "Due date: Oct 17th 11:59 pm"
+output: 
+  pdf_document:
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.width = 6, fig.height = 4, fig.align = "center")
+library(tidyverse)
+library(readxl)
+library(infer)
+library(lubridate)
+```
+
+```{r set_dir, echo = F}
+dir <- "D:/UMass/STAT_310/HW_4/"
+```
+
+# Reading 
+
+- Read Chapter 7 of the [textbook at the link](https://moderndive.com/index.html). 
+
+# Post-lecture concept check 
+
+- The post-lecture concept check about sampling and the CLT (concept and ggplot2) will available on Canvas from 10/8 and due **10/17 at 11:59 pm**. Note that the concept check is closed-book and has a time limit of 20 min.
+
+# Homework questions 
+
+**Instructions** 
+
+(1) Please comment your code (a comment starts with `#`, you can write many things in the comment e.g. explain what a piece of code does, take notes of external resources you used etc., your readers and future self will appreciate it). 
+
+(2) Explain your answers in words. Your answers should stand alone without the code. Below is an example of well documented code and answer. 
+
+(3) In all the plots, include axis labels and legends. 
+
+## COVID testing (20 pts)
+
+In this question, we will simulate random sampling from a simulated population with COVID-19 infections.
+
+
+(0) Load the data `covid_pop.csv` from Canvas Files/Data folder.  This data contains a simulated population of 10,000 people, some of whom have COVID-19. Use the `glimpse()` function to take a look at the data.  There are 3 character variables available for each simulated person, recording whether or not they have COVID symptoms, are a contact of someone with COVID or are infected with COVID.  Because this is a sampling exercise, we will pretend we cannot see the full population, and do not know what proportion are truly infected.
+
+
+```{r}
+covid <- read.csv(paste0(dir, "covid_pop.csv"))
+glimpse(covid)
+covid
+```
+
+(1) Suppose we have 500 COVID-19 tests available and we select 500 population members at random to test.  Note here that "testing" is playing the role of "sampling" in your book.  Use the `rep_sample_n()` function from `infer` package or `sample_n()` function from `dply` package to draw a random sample of size 500 from the population.  Compute the proportion positive in that sample.
+
+```{r}
+sample_covid <- sample_n(covid, size = 500)
+
+positive <- sample_covid %>% 
+  select(infected) %>% 
+  filter(infected == "infected") %>% 
+  summarise(total = n())
+
+
+proportion_positive <- pull(positive, total) / 500
+
+proportion_positive 
+```
+
+
+(2) Consider using the proportion positive in your sample in the previous part as a point estimate of the proportion positive in the whole population.  Is the sample random?   representative?  biased or unbiased?  Does it generalize to the full population?  What is the population parameter you are trying to estimate?  What is the study population?
+
+
+
+(3) Now suppose we test only symptomatic people.  Use the same sample function to now select 500 people to test from among symptomatic people only.  Compute the proportion positive in the sample.
+
+
+(4) Consider using the proportion positive in your sample in the previous part as a point estimate of the proportion positive in the whole population.  Is the sample random?   representative?  biased or unbiased?  Does it generalize to the full population?  What is the population parameter you are trying to estimate?  What is the study population?  Is there another study population to which this sample is more generalizable?
+
+
+
+(5) If you had more tests available, although not enough for the whole population, one strategy would be to test everyone who was either symptomatic or had contact with someone infected.  Simulate testing all of these people.  How many infected people did you find?  What was the proportion of tests that were positive?  *Hint*  You don't need the `sample_n()` function to simulate this, just subset and manipulate the tibble. 
+
+
+(6) Is the previous part a sample or a census?  A sample or census of what population?  Is it representative of the whole population?
+
+(7) Compared with testing only symptomatic individuals, how many more positives did you find by testing contacts as well as symptomatic? 
+
+
+## Sampling distribution and the Central Limit Theorem (12 pts)
+
+In this exercise, we will calculate confidence intervals for the proportion of infected individuals in the population. 
+
+(1) Sample 500 individuals from the population to test. What is the proportion infected in your sample? We will use this as our point estimate.  
+
+(2) Suppose the population proportion of infected is $p$, what is the standard error of your point estimate in part (1)? 
+
+(3) Use your sample proportion (calculated in part (1)) as an estimate for $p$, plug it into the formula in part (2). 
+
+(4) Use `rep_sample_n()` function to select 1000 samples of size 500 completely at random from the `covid_pop` data.  Compute the proportion infected from each replicate sample, summarize them in a histogram. Does it seem that Central Limit Theorem apply here? Why? What is the standard deviation of these proportions? How does it compare with your answer in part (3)? 
+
+(5) If you increase your sample size from 500 to 1000, would the standard error of your point estimate increase or decrease? why?
+
+
+## Precision and accuracy (2 pts)
+
+In section 7.3.3 of the text, there is a lovely picture comparing precision and accuracy.  Consider the following 4 sampling situations, and determine, among them, which belongs in each of the four quadrants of this diagram:
+
+- Sampling 500 from the full population
+- Sampling 2500 from the full population
+- Sampling 500 from symptomatics only
+- Sampling 2500 from symptomatics only
+
+If you were interested in estimating the proportion infected, which of these cases would you prefer?
+
+
+
+## Extra Point:  Stratified sampling (4 pts)
+
+Stratification is a method of combining samples from subgroups to get a more accurate estimate of a total. 
+
+Consider splitting your sampling budget between symptomatic and asymptomatic people.  Suppose you have 1000 total tests, and decide to test 500 symptomatic and 500 asymptomatic people.  You compute the proportion infected in each part of the sample.  Then you must somehow combine them to estimate the total proportion infected in the population.  You may assume that you know the number of people in the population who are symptomatic and asymptomatic.  
+
+(1)  Determine how you will compute and combine these numbers, then code up such an estimate in R.
+
+(2) Once you have determined a sampling strategy and method for finding a point estimate for stratified sampling, study how the sampling distribution of this new point estimate compares to to the sampling distribution of the point estimate from sampling all 1000 samples completely at random from the whole population.  
+
+You will want to replicate each sampling strategy many (1000?) times, then compare the two resulting samples.  How would you summarize differences and similarities?  If you wanted to know about the total proportion infected, which method would you prefer?
+
+This is known as a  simulation study:  a study using simulation to illustrate the properties of a procedure in many random realizations. 
+
+
+## Project work 
+
+Turn in one assignment per team, write the name of the team members on top of the assignment. 
+
+In the last assignment, you have brainstormed some questions you might investigate in the project. This week, you will look into some background related to these questions and start exploring the data. 
+
+(1) Look up some literature about the question you want to study and form some hypothesis from there. For example, what is your state's COVID-story? What were the dates of key events like COVID restrictions taking effect or being removed? What have people found about vaccine efficacy? If you are looking at the open policing data, you can look at some of the literature or news [on the website](https://openpolicing.stanford.edu/publications/). Describe your findings and keep a record of the website/articles you have found. 
+
+(2) Find at least 6 continuous and 2 categorical variables and describe them in a table. You can also create your own variables. Explain why you choose these variables. 
+
+**Example**
+
+| Variable name  | Description |
+|------|-----|
+|   Vaccinations per 100000  |  Number of vaccinations per 100000 population | 
+|  Population over 65 per 100000   |   Number of adults over 65 years old per 100000 population| 
+
+```{r}
+data <- read.csv("D:/UMass/STAT_310/HW_4/tn_nashville_2020_04_01.csv")
+
+subset <- data %>% 
+  select(subject_race, reason_for_stop)
+
+
+```
+
+
+```{r}
+subset %>% 
+  ggplot(aes(x = reason_for_stop, fill = subject_race))+
+    geom_bar(position = "dodge") +
+    labs(title = "reason for stop by race",
+         x = "Reason for stop",
+         y = "Total stop")+
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+```
+
+(3) Visualize and summarize the variables you mentioned in part (2) (you will continue doing this next week). 
+
+- Create at least 3 plots to visualize variables that you consider to be explanatory. 
+
+- Create at least 3 plots to examine relationship between the explanatory variables and the variable you are interested to study. 
+
+What do you observe from the graphs?
+
+Some examples:
+
+- scatterplot of infection rate versus unemployment rate for each county
+- boxplot showing proportion of stops that lead to search in different time of each day
+- scatterplot of vaccination per 100K versus population over 65 per 100K
+- column plot the stop rate of individuals who are stopped among different gender and racial groups
+
+
+
+
+
+
+
+
+
+
+
+
+
+
